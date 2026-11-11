@@ -62,6 +62,36 @@ python .\plot_weather.py
 - 가로축: `Time (KST)`
 - 세로축: `Temperature (°C)`
 
+## 풍속 학습 데이터 생성
+
+`asos_108_2023_2024.csv`에서 관측 누락 시각을 시간축에 반영하고, 풍속 예측용 입력과 정답을 생성합니다. 원본은 변경하지 않습니다.
+
+```powershell
+.\make_wind_dataset.ps1
+```
+
+`wind_dataset.csv`의 `prediction_time`은 입력을 기준으로 예측하는 시각이며 `target_time`은 정답 시각입니다. 입력 열은 해당 시각의 풍속·기온·습도와 1시간 및 2시간 전 풍속이고, `target_wind_speed_ms`는 1시간 뒤 실제 풍속입니다. 필요한 입력이나 정답 중 하나라도 없으면 해당 행을 저장하지 않습니다.
+
+## 풍속 선형 회귀 학습 및 평가
+
+KST 기준 `target_time`이 2023년 1월부터 2024년 11월까지인 행으로 선형 회귀를 한 번 학습하고, 2024년 12월 행만 평가합니다. 평가 기간에는 재학습하지 않습니다. 현재 풍속을 유지하는 기준 예측과, 현재 풍속·1·2시간 전 풍속·기온·습도를 사용하는 선형 회귀를 같은 평가 행에서 비교합니다. 음수 회귀 예측은 0으로 자릅니다.
+
+```powershell
+.\train_wind_model.ps1
+```
+
+두 방법의 평가 예측은 `predictions.csv`에 저장됩니다.
+
+## 풍속 예측 주간 그래프
+
+`predictions.csv`에서 정답 시각 기준 2024년 12월 1일 00시부터 12월 7일 23시까지 세 예측 방법을 비교하는 그래프를 저장합니다. MAE는 해당 주가 아닌 12월 전체 평가 행으로 계산합니다.
+
+```powershell
+.\plot_wind_predictions.ps1
+```
+
+그래프 파일은 `prediction_week.png`입니다.
+
 ## 주요 함수
 
 ### `collect_weather.py`
